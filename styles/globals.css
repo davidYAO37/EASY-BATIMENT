@@ -1,0 +1,238 @@
+:root {
+  --background: #f8f9fa;
+  --foreground: #1e293b;
+  --primary: #0d6efd;
+  --primary-dark: #0b5ed7;
+  --secondary: #64748b;
+  --success: #198754;
+  --danger: #dc3545;
+  --warning: #f59e0b;
+  --info: #0dcaf0;
+  --light: #f8f9fa;
+  --dark: #212529;
+  --card-bg: #ffffff;
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.07);
+  --card-radius: 0.75rem;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #e2e8f0;
+    --card-bg: #1e293b;
+    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  }
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Modern card enhancements */
+.card {
+  background-color: var(--card-bg);
+  border: none;
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+}
+
+.card-header {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-weight: 600;
+}
+
+.navbar {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-header h1 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* Print sheet (A4 style preview) */
+.print-sheet {
+  background: #ffffff;
+  color: #000000;
+  max-width: 210mm;
+  min-height: 297mm;
+  margin: 1rem auto;
+  padding: 1.5cm;
+  box-shadow: 0 0 0 1px #e5e7eb, 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-radius: 0.25rem;
+}
+
+.print-sheet h1,
+.print-sheet h2,
+.print-sheet h3 {
+  color: #111827;
+}
+
+.print-sheet .table {
+  border: 1px solid #d1d5db;
+}
+
+.print-sheet .table th,
+.print-sheet .table td {
+  border-color: #d1d5db;
+}
+
+@media (max-width: 576px) {
+  .print-sheet {
+    padding: 1rem;
+    margin: 0;
+    max-width: 100%;
+    box-shadow: none;
+    min-height: auto;
+  }
+}
+
+/* Print styles */
+@media print {
+  @page {
+    margin: 1.5cm;
+    size: auto;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 12pt;
+  }
+
+  /* Hide navigation and interactive chrome */
+  .navbar,
+  .btn,
+  .form-select,
+  .form-control,
+  .input-group,
+  .d-print-none,
+  [role="alert"]:not(.print-header),
+  .spinner-border,
+  .spinner-grow {
+    display: none !important;
+  }
+
+  /* Show print header */
+  .print-header {
+    display: block !important;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #000;
+  }
+
+  .print-header h1 {
+    font-size: 18pt;
+    margin: 0;
+  }
+
+  .print-header p {
+    font-size: 10pt;
+    color: #444;
+    margin: 0.25rem 0 0;
+  }
+
+  /* Ensure cards are visible but flat */
+  .card {
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    break-inside: avoid;
+    margin-bottom: 1rem;
+  }
+
+  .card-header {
+    background: #f8f9fa !important;
+    border-bottom: 1px solid #ddd !important;
+  }
+
+  /* Tables print cleanly */
+  .table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10pt;
+  }
+
+  .table th,
+  .table td {
+    border: 1px solid #999 !important;
+    padding: 0.4rem;
+  }
+
+  .table thead th {
+    background: #f1f1f1 !important;
+    color: #000 !important;
+  }
+
+  .badge {
+    border: 1px solid #999;
+    color: #000 !important;
+    background: #f1f1f1 !important;
+  }
+
+  /* Avoid breaking inside important blocks */
+  .card,
+  .table,
+  .list-group {
+    break-inside: avoid;
+  }
+
+  tr {
+    break-inside: avoid;
+  }
+
+  /* Page titles */
+  h1 {
+    font-size: 18pt;
+    font-weight: 700;
+  }
+
+  h2,
+  h3,
+  h4,
+  h5 {
+    font-size: 14pt;
+    font-weight: 600;
+  }
+
+  /* Links show their URL */
+  a[href]:after {
+    content: ' (' attr(href) ')';
+    font-size: 9pt;
+    color: #555;
+  }
+
+  a[href^='#']:after,
+  a[href^='javascript:']:after {
+    content: '';
+  }
+}
