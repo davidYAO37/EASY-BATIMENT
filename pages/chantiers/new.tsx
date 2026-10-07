@@ -5,6 +5,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import Layout from '@/components/Layout';
 import PrintButton from '@/components/PrintButton';
 
+interface Role {
+  _id: string;
+  name: string;
+  code: string;
+}
+
 interface User {
   _id: string;
   fullName?: string;
@@ -12,6 +18,7 @@ interface User {
   lastName: string;
   email: string;
   active?: boolean;
+  role?: Role | string;
 }
 
 export default function NewChantier() {
@@ -132,12 +139,14 @@ export default function NewChantier() {
                 onChange={(e) => setForm({ ...form, chefChantier: e.target.value })}
                 required
               >
-                <option value="">Choisir...</option>
-                {users.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.fullName || `${u.firstName} ${u.lastName}`} ({u.email})
-                  </option>
-                ))}
+                <option value="">Choisir un chef chantier...</option>
+                {users
+                  .filter((u) => (typeof u.role === 'object' ? u.role?.code : u.role) === 'CHEF_CHANTIER')
+                  .map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.fullName || `${u.firstName} ${u.lastName}`} ({u.email})
+                    </option>
+                  ))}
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3" controlId="receptionnisteBureau">
@@ -147,12 +156,14 @@ export default function NewChantier() {
                 onChange={(e) => setForm({ ...form, receptionnisteBureau: e.target.value })}
                 required
               >
-                <option value="">Choisir...</option>
-                {users.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.fullName || `${u.firstName} ${u.lastName}`} ({u.email})
-                  </option>
-                ))}
+                <option value="">Choisir un réceptionniste bureau...</option>
+                {users
+                  .filter((u) => (typeof u.role === 'object' ? u.role?.code : u.role) === 'RECEPTION_BUREAU')
+                  .map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.fullName || `${u.firstName} ${u.lastName}`} ({u.email})
+                    </option>
+                  ))}
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3" controlId="receptionnisteChantier">
@@ -162,12 +173,14 @@ export default function NewChantier() {
                 onChange={(e) => setForm({ ...form, receptionnisteChantier: e.target.value })}
                 required
               >
-                <option value="">Choisir...</option>
-                {users.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.fullName || `${u.firstName} ${u.lastName}`} ({u.email})
-                  </option>
-                ))}
+                <option value="">Choisir un réceptionniste chantier...</option>
+                {users
+                  .filter((u) => (typeof u.role === 'object' ? u.role?.code : u.role) === 'RECEPTION_CHANTIER')
+                  .map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.fullName || `${u.firstName} ${u.lastName}`} ({u.email})
+                    </option>
+                  ))}
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3" controlId="budgetPrevisionnel">

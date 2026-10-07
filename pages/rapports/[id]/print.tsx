@@ -1,7 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { Row, Col, Table } from 'react-bootstrap';
+import { Row, Col, Table, Button, Badge, Alert } from 'react-bootstrap';
+import { MdEdit, MdDelete } from 'react-icons/md';
+import { useAuth } from '@/contexts/AuthContext';
 import PrintLayout from '@/components/print/PrintLayout';
+
+interface InventoryLine {
+  _id: string;
+  article: { _id: string; nom: string; unite: string } | null;
+  type: 'Entrée' | 'Sortie' | 'Transfert';
+  quantite: number;
+  motif: string;
+  reference?: string;
+  stockTheorique?: number;
+  stockReel?: number;
+}
 
 interface Rapport {
   _id: string;
@@ -15,17 +28,26 @@ interface Rapport {
   besoins?: string;
   observations?: string;
   photos: { type: string; url: string; legende?: string }[];
+  mouvements?: InventoryLine[];
   chantier?: { code: string; nom: string; localisation?: string };
-  createdBy?: { firstName: string; lastName: string };
+  createdBy?: { _id: string; firstName: string; lastName: string };
+  luPar?: string[];
   createdAt: string;
 }
 
 export default function RapportPrintPage() {
   const router = useRouter();
   const { id } = router.query;
+  const { user } = useAuth();
   const [rapport, setRapport] = useState<Rapport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const isAuthor = rapport?.createdBy?._id === user?.id;
+  const isUnread = !rapport?.luPar || rapport.luPar.length === 0;
+  const modifiable = isAuthor && isUnread;
 
   useEffect(() => {
     if (!id) return;
@@ -34,11 +56,40 @@ export default function RapportPrintPage() {
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || 'Erreur');
-        setRapport(json);
+        setRapport(json as Rapport);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Erreur'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function handleDelete() {
+    if (!confirm('Supprimer ce rapport ? Cette action est irréversible.')) return;
+    if (!id || Array.isArray(id)) return;
+    setDeleting(true);
+    setError('');
+    const token = localStorage.getItem('easy_batiment_token');
+    try {
+      const res = await fetch(`/api/rapports/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token || ''}` },
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Erreur');
+      }
+      setSuccess('Rapport supprimé');
+      setTimeout(() => router.push('/rapports'), 800);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  function handleEdit() {
+    if (!id || Array.isArray(id)) return;
+    router.push(`/rapports?edit=${id}`);
+  }
 
   const section = (label: string, value?: string) =>
     value ? (
@@ -54,11 +105,34 @@ export default function RapportPrintPage() {
     <PrintLayout title={`Rapport de chantier ${rapport?.chantier?.code || ''}`} loading={loading} error={error}>
       {rapport && (
         <>
-          <header className="border-bottom pb-3 mb-4">
-            <h1 className="h3 mb-1">Rapport de chantier</h1>
-            <p className="text-muted mb-0">
-              {rapport.chantier ? `${rapport.chantier.code} - ${rapport.chantier.nom}` : 'Chantier non renseigné'}
-            </p>
+          {error && <Alert variant="danger">{error}</Alert>}
+          {success && <Alert variant="success">{success}</Alert>}
+
+          <header className="border-bottom pb-3 mb-4 d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+              <h1 className="h3 mb-1">Rapport de chantier</h1>
+              <p className="text-muted mb-0">
+                {rapport.chantier ? `${rapport.chantier.code} - ${rapport.chantier.nom}` : 'Chantier non renseigné'}
+              </p>
+            </div>
+            <div className="d-flex flex-column align-items-end gap-2">
+              <div className="d-flex gap-2 d-print-none">
+                <Button variant="outline-warning" size="sm" onClick={handleEdit} disabled={!modifiable || deleting}>
+                  <MdEdit className="me-1" /> Modifier
+                </Button>
+                <Button variant="outline-danger" size="sm" onClick={handleDelete} disabled={!modifiable || deleting}>
+                  <MdDelete className="me-1" /> Supprimer
+                </Button>
+              </div>
+              <Badge bg={isUnread ? 'danger' : 'success'}>
+                {isUnread ? 'Non lu' : 'Lu'}
+              </Badge>
+              {!modifiable && (
+                <span className="text-muted small" style={{ maxWidth: 260, textAlign: 'right' }}>
+                  Ce rapport ne peut être modifié ou supprimé que par l&apos;auteur tant qu&apos;il n&apos;est pas lu.
+                </span>
+              )}
+            </div>
           </header>
 
           <Row className="mb-4">
@@ -86,6 +160,45 @@ export default function RapportPrintPage() {
           {section('Incidents', rapport.incidents)}
           {section('Besoins', rapport.besoins)}
           {section('Observations', rapport.observations)}
+
+          {rapport.mouvements && rapport.mouvements.length > 0 && (
+            <>
+              <h5 className="text-uppercase text-muted small fw-bold mb-3">Constat d&apos;inventaire</h5>
+              <Table bordered responsive className="mb-4" size="sm">
+                <thead>
+                  <tr>
+                    <th>Article</th>
+                    <th>Unité</th>
+                    <th>Stock théo.</th>
+                    <th>Stock réel</th>
+                    <th>Écart</th>
+                    <th>Mouvement</th>
+                    <th>Qté</th>
+                    <th>Motif</th>
+                    <th>Réf.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rapport.mouvements.map((m, idx) => {
+                    const ecart = m.stockReel !== undefined && m.stockTheorique !== undefined ? m.stockReel - m.stockTheorique : 0;
+                    return (
+                      <tr key={idx}>
+                        <td>{m.article?.nom || 'Inconnu'}</td>
+                        <td>{m.article?.unite || '-'}</td>
+                        <td>{m.stockTheorique ?? '-'}</td>
+                        <td>{m.stockReel ?? '-'}</td>
+                        <td className={ecart > 0 ? 'text-success' : ecart < 0 ? 'text-danger' : ''}>{ecart > 0 ? `+${ecart}` : ecart}</td>
+                        <td>{m.type}</td>
+                        <td>{m.quantite}</td>
+                        <td>{m.motif}</td>
+                        <td>{m.reference || '-'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </>
+          )}
 
           {rapport.photos.length > 0 && (
             <>

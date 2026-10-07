@@ -12,6 +12,7 @@ export interface IRapportChantier extends Document {
   besoins?: string;
   observations?: string;
   photos: { type: string; url: string; legende?: string }[];
+  mouvements?: mongoose.Types.ObjectId[];
   luPar?: mongoose.Types.ObjectId[];
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -37,6 +38,7 @@ const RapportChantierSchema = new Schema<IRapportChantier>(
         legende: { type: String, trim: true },
       },
     ],
+    mouvements: [{ type: Schema.Types.ObjectId, ref: 'MouvementStock' }],
     luPar: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
